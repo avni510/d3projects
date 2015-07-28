@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>D3 Page Template</title>
+        <script type="text/javascript" src="../d3/d3.v3.js"></script>
+        <style type="text/css">
+           .axis path,
+            .axis line {
+                fill: none;
+                stroke: black;
+                shape-rendering: crispEdges;
+            }    
+
+            .axis text{
+                font-family: sans-serif;
+                font-size: 11px
+            }
+            .title{
+                font: bold 20px  sans-serif;
+}
+
+.axis.label{
+    font: 13px  sans-serif;
+}
+
+/* d3 CSS code (tip and triangle) taken from http://bl.ocks.org/Caged/6476579 */
+
+.d3-tip {
+            line-height: 1;
+            font-weight: bold;
+            padding: 5px;
+            font: 12px sans-serif;
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            border-radius: 2px;
+            width: 97px;
+            word-wrap: break-word;
+
+} 
+
+/* Creates a small triangle extender for the tooltip */
+.d3-tip:after {
+  box-sizing: border-box;
+  display: inline;
+  font-size: 8px;
+  width: 100%;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.8);
+  content: "\25BC";
+  position: absolute;
+  text-align: center;
+}
+
+/* Style northward tooltips differently */
+.d3-tip.n:after {
+  margin: -1px 0 0 0;
+  top: 100%;
+  left: 0;
+}
+
+circle:hover{
+    fill:lightcoral;
+}
+
+
+        </style>
+    </head>
+    <body>
+        <script type="text/javascript">
+
+//declare dataset as a variable
+var dataset = [];
+d3.csv("LocationValues.csv", function(data) {
+  dataset = data 
+
+// convert all the numbers from strings into numerical values
+for (var i = 0; i < dataset.length; i ++){
+    dataset[i].Area = Number(dataset[i].Area)
+    dataset[i].Latitude = Number(dataset[i].Latitude)
+    dataset[i].Longitude = Number(dataset[i].Longitude)
+}
+
+
+
+
+//set area for bar chart (including labels, axises, etc)
+            
+            var margin = {
+                top: 80,
+                bottom: 60,
+                right: 40,
+                left: 40,};
+            var w = 960 - margin.right - margin.left;
+            var h = 600 - margin.top - margin.bottom;
+
+            // create x  scale 
+            var xscale = d3.scale.linear()
+            .domain([d3.min(dataset,function(d) {
+                return d.Longitude;
+            }), 
+            d3.max(dataset, function(d) {
+                    return d.Longitude;})])
+            .range([0, w]);
+
+            //create y  scale
+            var yscale = d3.scale.linear()
+        .domain([ 
+            d3.min(dataset, function(d) {
+            return d.Latitude;}), 
+            d3.max(dataset,function(d){
+                return d.Latitude;
+            })
+
+        ])
+        .range([h, 0]);
+
+            // create radius scale
+            var rscale = d3.scale.linear()
+            .domain([
+                d3.min(dataset, function(d) {
+                return d.Area;}), 
+                d3.max(dataset, function(d) {
+                    return d.Area;})])
+            .range([5,20]); 
+
+            //create xaxis 
+            var xaxis = d3.svg.axis()
+            .scale(xscale)
+            .orient("top");
+
+            //create yaxis 
+            var yaxis = d3.svg.axis()
+            .scale(yscale)
+            .orient("left");
+
+            //set text box elements
+            var tip = d3.tip()
+            .attr("class", "d3-tip")
+            .html(function(d){
+                return "<center><b>Neighborhood: </b>" + d.Neighborhood + "</center>";
+            })
+            .offset([-10,0]);
+
+            var color = d3.scale.ordinal()
+            .range(['#81BEF7', '#648C85', '#B3F2C9', '#528C18', '#C3F25C']);
+
+            
+
+            //create SVG elements
+           var svg = d3.select("body")
+            .append("svg")
+            .attr({
+                width: w + margin.left + margin.right,
+                height: h + margin.bottom + margin.top,
+            })
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+            svg.call(tip);
+
+            //create circles
+            svg.selectAll("circle")
+            .data(dataset)
+            .enter()
+            .append("circle")
+            .attr({
+                cx: function(d){
+                    return xscale(d.Longitude);
+                },
+                cy: function (d){
+                    return yscale(d.Latitude);
+                },
+                r: function(d){
+                    return rscale(d.Area)
+                    ;},
+                fill: function(d){
+                    return color(d.Location);
+                },
+            })
+            .on("mouseover", tip.show)
+            .on("mouseout", tip.hide);
+ 
+        //draw x axis
+        svg.append("g")
+        .attr("class", "axis")
+        .attr("transform", "translate(0," + h - margin.top   + ")")
+        .call(xaxis)
+        .style("opacity", .2);
+        
+        //create x axis label
+        svg.append("text")
+        .attr("class", "axis label")
+        .attr({
+            x: 850,
+            y: -30,
+        })
+        .style("text-anchor", "middle")
+        .text("Longitude")
+        .style("opacity", .2);;
+
+
+        //draw y axis
+        svg.append("g")
+        .attr("class", "axis")
+        .attr("transform", "translate(" + 0 + ",0)")
+        .call(yaxis)
+        .style("opacity", .2); 
+
+       //create y axis label
+        svg.append("text")
+            .attr("text-anchor", "middle")  
+            .attr("class", "axis label")
+            .attr("transform", "translate(20," + (h - 30) + ")rotate(-90)") 
+            .text("Latitude")
+            .style("opacity", .2); 
+
+var legendRectSize = 14;
+var legendSpacing = 4;
+
+//legend code parts taken from http://zeroviscosity.com/d3-js-step-by-step/step-3-adding-a-legend
+
+        //create the legend
+        var legend = svg.selectAll('.legend')
+        .data(color.domain())
+        .enter()
+        .append('g')
+        .attr('class', 'legend')
+        .attr('transform', function(d, i) {
+            var height = legendRectSize + legendSpacing;
+            var horizontal =  legendRectSize + 20;
+            var vertical = i * height + 375 ;
+            return 'translate(' + horizontal + ',' + vertical + ')';
+        });
+
+        //create legend title
+         svg.append("text")
+        .attr({
+            x: margin.left + 30,
+            y: margin.top + 285,
+        })
+        .style("font-size", "16px")
+        .style("text-anchor", "middle")
+        .text("Parts of Chicago");
+
+        //create square colors 
+        legend.append("rect")
+        .attr("width", legendRectSize)
+        .attr("height", legendRectSize)
+        .style("fill", color);
+
+        //add text to each square
+        legend.append("text")
+        .attr("x", legendRectSize + legendSpacing)
+        .attr("y", legendRectSize - legendSpacing)
+        .style("font-size", "15px")
+        .text(function(d) {
+            return d;
+        });
+
+
+        //create title
+
+svg.append("text")
+        .attr("class", "title")
+        .attr("x", (w / 2))             
+        .attr("y",  -50)
+        .attr("text-anchor", "middle")    
+        .text("Pledge Vote Locations"); 
+
+});
+
+
+        </script>
+    </body>
+</html>
