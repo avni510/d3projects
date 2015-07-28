@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>D3 Page Template</title>
+        <script type="text/javascript" src="../d3/d3.v3.js"></script>
+        <style type = "text/css"> 
+        .axis path, 
+        .axis line {
+            fill: none;
+            stroke: black;
+            shape-rendering: crispEdges;
+        }
+
+        .axis text{
+            font-family: sans-serif;
+            font-size: 8px
+        }
+
+        .d3-tip {
+            line-height: 1;
+            font-weight: bold;
+            padding: 5px;
+            font: 12px sans-serif;
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            border-radius: 2px;
+} 
+
+/* Creates a small triangle extender for the tooltip */
+.d3-tip:after {
+  box-sizing: border-box;
+  display: inline;
+  font-size: 8px;
+  width: 100%;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.8);
+  content: "\25BC";
+  position: absolute;
+  text-align: center;
+}
+
+/* Style northward tooltips differently */
+.d3-tip.n:after {
+  margin: -1px 0 0 0;
+  top: 100%;
+  left: 0;
+}
+
+rect:hover{
+    fill:lightsteelblue;
+}
+
+.title{
+    font: bold 20px  sans-serif;
+}
+
+.x.axis path,
+.x.axis line {
+    display: none;
+}
+
+.x.axis text{
+            font-family: sans-serif;
+            font-size: 10px
+        }
+
+       
+        </style>
+    </head>
+    <body>
+        <script type="text/javascript">
+
+        
+//declare dataset as a variable
+var dataset = [];
+
+//load Pledge Voter Data from Excel as a CSV file
+    d3.csv("PledgeVotesData.csv", function(data) {
+  dataset = data 
+   
+// convert all the votes into numerical values
+for (var i = 0; i < dataset.length; i ++){
+    dataset[i].key = Number(dataset[i].key)
+}
+
+
+//set area for bar chart (including labels, axises, etc)
+            var margin = {
+                top: 40,
+                bottom: 60,
+                right: 40,
+                left: 40,};
+            w = 960 - margin.right - margin.left;
+            h = 600 - margin.top - margin.bottom;
+
+            //x axis scaling
+            var xscale = d3.scale.ordinal()
+            .domain(dataset.map(function(d) {return d.val; }))
+            .rangeRoundBands([0, w], .2);
+
+            //y axis scaling
+            var yscale = d3.scale.linear()
+            .domain([0, d3.max(dataset, function(d) {return d.key; })])
+            .range([h, 0]);
+
+            
+            //set xaxis
+            var xaxis = d3.svg.axis()
+            .scale(xscale)
+
+
+            //set yaxis 
+            var yaxis = d3.svg.axis()
+            .scale(yscale)
+            .orient("left")
+            //.ticks(5);
+
+            //set text box elements
+            var tip = d3.tip()
+            .attr("class", "d3-tip")
+            .html(function(d) {
+                return "<center><span style='color:red'>Total Votes: " + d.key + "</span></center>" + "Volunteer: " + d.Volunteer + "<br/>"+ " Internship: " + d.Internship;}) 
+            .offset([-10,0]);
+
+            
+
+             //create svg elements
+            var svg = d3.select("body")
+                .append("svg")
+               .attr({
+                    width: w + margin.left + margin.right,
+                    height: h + margin.top + margin.bottom,
+                });
+
+            svg.call(tip);
+
+            //create the bars in the chart
+            svg.selectAll("rect")
+            .data(dataset)
+            .enter()
+            .append("rect")
+            .attr({
+                x: function(d){return xscale(d.val) + margin.left;},
+                y: function (d){return yscale(d.key) + (margin.bottom + 10);},
+                width: xscale.rangeBand(),
+                height: function(d){return yscale(0) - yscale(d.key);},
+                fill: function(d){return "rgb(0 ,60, 140)";}
+            })
+            .on("mouseover", tip.show)
+            .on("mouseout", tip.hide);
+
+            //draw x axis 
+            svg.append("g")
+            .attr({
+                class: "x axis",
+                transform: "translate(40," + (h + margin.top + (margin.bottom / 2)) + ")", 
+            })
+            .call(xaxis)
+            .selectAll(".tick text")
+            .call(wrap, xscale.rangeBand());
+
+
+            //draw y axis 
+            svg.append("g")
+            .attr({
+                class: "axis",
+                transform: "translate(" +( margin.left) + ",70)", 
+            })
+            .call(yaxis);
+
+//wrapping text function post written by Mike Bostock http://bl.ocks.org/mbostock/7555321
+            
+// wrap text function for the x axis
+function wrap(text, w) {
+  text.each(function() {
+    var text = d3.select(this),
+        words = text.text().split(/\s+/).reverse(),
+        word,
+        line = [],
+        lineNumber = 0,
+        lineHeight = 1.1,
+        y = text.attr("y"),
+        dy = parseFloat(text.attr("dy")),
+        tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em");
+    while (word = words.pop()) {
+      line.push(word);
+      tspan.text(line.join(" "));
+      if (tspan.node().getComputedTextLength() > w) {
+        line.pop();
+        tspan.text(line.join(" "));
+        line = [word];
+        tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
+      }
+    }
+  });
+}
+            
+                
+
+//create title for bar chart 
+
+svg.append("text")
+        .attr("class", "title")
+        .attr("x", (w / 2))             
+        .attr("y",  30) 
+        .text("Pledge Issues"); 
+});
+
+        </script>
+    </body>
+</html>
