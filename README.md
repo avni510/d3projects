@@ -9,4 +9,6 @@ Bar Chart: shows visually the total number of people that care about each local 
 
 Scatter Plot: Aggregated total number of votes by each Zip Code and plotted them by Latitude/ Longitude. The area of the circle represents the total number of votes in that zip code. 
 
+I had about 5 weeks to complete the project. I learned Javascript for the first 2 weeks and then learned d3. 
+
 **used tool-tips to create mouseover text boxes 
